@@ -65,6 +65,7 @@ class NonlinearVariationalProblem(object):
         # Store form compiler parameters
         self.form_compiler_parameters = form_compiler_parameters
         self._constant_jacobian = False
+        # I'm confused, surely this will ALWAYS make _constant_jacobian be false?
 
     @utils.cached_property
     def dm(self):
@@ -218,6 +219,7 @@ class NonlinearVariationalSolver(OptionsManager):
            If bounds are provided the ``snes_type`` must be set to
            ``vinewtonssls`` or ``vinewtonrsls``.
         """
+        # I wonder if we really want to modify this code (or possibly some code that is called in here)
         # Make sure appcontext is attached to the DM before we solve.
         dm = self.snes.getDM()
         # Apply the boundary conditions to the initial guess.
@@ -264,6 +266,7 @@ class LinearVariationalProblem(NonlinearVariationalProblem):
                  varying fields).  If your Jacobian can change, set
                  this flag to ``False``.
         """
+        # Would need to change input arguments here
         # In the linear case, the Jacobian is the equation LHS.
         J = a
         # Jacobian is checked in superclass, but let's check L here.
@@ -278,7 +281,9 @@ class LinearVariationalProblem(NonlinearVariationalProblem):
 
         super(LinearVariationalProblem, self).__init__(F, u, bcs, J, aP,
                                                        form_compiler_parameters=form_compiler_parameters)
+        # Change super call
         self._constant_jacobian = constant_jacobian
+        # Change this definition?
 
 
 class LinearVariationalSolver(NonlinearVariationalSolver):

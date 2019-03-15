@@ -280,6 +280,39 @@ class _SNESContext(object):
         problem = ctx._problem
 
         assert J.handle == ctx._jac.petscmat.handle
+        # I think what we want in here is something along the lines of
+        # 'If J or Jp have changed, then reassemble'
+
+        #Or alternatively, 'if they haven't changed, don't reassemble'
+
+        #I guess the current approach could be summarised as 'J (and I
+        # suppose Jp) WILL NOT change, so don't recompute them'
+
+
+        # From the PETSc documentation on snes_lag_preconditioner:
+        # -1 indicates NEVER rebuild, 1 means rebuild every time the
+        # -Jacobian is computed within a single nonlinear solve, 2 means
+        # -every second time the Jacobian is built etc. -2 indicates
+        # -rebuild preconditioner at next chance but then never rebuild
+        # -after that
+
+        # From the PETSc documentation on ksp_reuse_preconditioner:
+        # reuse the current preconditioner, do not construct a new one
+        # even if the operator changes
+
+        # So what I am currently saying is 'never rebuild the
+        # preconditioner' (which, at the time, was what I wanted. Also,
+        # I should point out that if I change things to do something
+        # clever here, it might be a lot harder to get LU times
+        # out. Because then there'll be one symbolic factorisation, and
+        # then a bunch of numerical factorisations. Well, you could just
+        # add on the symbolic time to each LU, and just say that's what
+        # you were doing in the paper/code.
+
+        # I think the current issue is how you figure out if anything
+        # has changed. To see how this works, I presume I'll need to
+        # track a and aP from the LinearVariationalProblem downwards.
+
         if problem._constant_jacobian and ctx._jacobian_assembled:
             # Don't need to do any work with a constant jacobian
             # that's already assembled
@@ -303,6 +336,7 @@ class _SNESContext(object):
 
     @staticmethod
     def compute_operators(ksp, J, P):
+        # Probably should modify this too
         r"""Form the Jacobian for this problem
 
         :arg ksp: a PETSc KSP object
